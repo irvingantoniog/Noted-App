@@ -126,6 +126,7 @@
     }
 
     clearForm();
+    document.body.focus(); // Quitar focus antes de cerrar modal
     window.modal.close();
   });
 
