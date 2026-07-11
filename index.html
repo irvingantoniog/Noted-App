@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Noted</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="logo" href="#">Not<span>ed</span></a>
+        <button id="newNoteBtn" class="btn primary">+ Nueva nota</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <h1>Mis notas</h1>
+        <p class="subtitle">Todo lo que no quiero olvidar, en un solo lugar.</p>
+      </section>
+
+      <section id="notesGrid" class="notes-grid" aria-live="polite">
+        <!-- Las notas se renderizan dinámicamente desde app.js -->
+      </section>
+
+      <footer class="attribution">Hecho con HTML en clase de Litoral Code 🍪</footer>
+    </main>
+
+    <!-- Modal -->
+    <div id="modal" class="modal" aria-hidden="true">
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button class="modal-close" id="closeModal" aria-label="Cerrar">✕</button>
+        <h2 id="modal-title">Nueva nota</h2>
+        <p class="modal-sub">Apunta esa idea antes de que se te escape.</p>
+
+        <form class="note-form" id="noteForm">
+          <input type="hidden" id="noteId" value="" />
+          <label class="field">
+            <span class="label">Título</span>
+            <input id="noteTitle" type="text" placeholder="Escribe un título genial aquí..." />
+          </label>
+
+          <div class="field">
+            <span class="label">Categoría</span>
+            <div class="categories">
+              <input type="radio" id="cat-trabajo" name="category" value="Trabajo" checked />
+              <label for="cat-trabajo">Trabajo</label>
+
+              <input type="radio" id="cat-ideas" name="category" value="Ideas" />
+              <label for="cat-ideas">Ideas</label>
+
+              <input type="radio" id="cat-personal" name="category" value="Personal" />
+              <label for="cat-personal">Personal</label>
+            </div>
+          </div>
+
+          <label class="field">
+            <span class="label">Contenido</span>
+            <textarea id="noteContent" rows="6" placeholder="Escribe aquí tu nota..."></textarea>
+          </label>
+
+          <div class="form-actions">
+            <button type="button" class="btn ghost" id="cancelBtn">Cancelar</button>
+            <button type="submit" class="btn primary" id="saveNoteBtn">Guardar nota</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="modal.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
