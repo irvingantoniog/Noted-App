@@ -15,6 +15,7 @@
   function closeModal(){
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden','true');
+    document.body.focus(); // Remover focus del modal
   }
 
   // Exponer API simple para que otras partes (app.js) puedan usarlo
