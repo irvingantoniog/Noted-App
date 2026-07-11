@@ -1,16 +1,11 @@
-// app.js — manejo de notas en memoria (preparado para Supabase)
+// app.js — manejo de notas en Supabase
 (function(){
-  // Datos en memoria
-  let notes = [
-    { id: '1', title: 'Comprar más café', content: 'Necesitamos combustible para funcionar.', tag: 'Hoy', category: 'Trabajo' },
-    { id: '2', title: 'Grabar contenido', content: 'Tema: cómo construir tu primera aplicación web.', tag: 'Ayer', category: 'Ideas' },
-    { id: '3', title: 'Idea para reunión', content: 'PowerPoint Party.', tag: 'Lunes', category: 'Personal' }
-  ];
+  // Inicializar cliente Supabase
+  const SUPABASE_URL = 'https://lohrinneyotergkdocde.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_PvJv4N5RvpmQwkZ6sTdB1Q_ZwmBkgnK';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Placeholder Supabase client (lista para configurar)
-  // const SUPABASE_URL = 'https://...';
-  // const SUPABASE_KEY = 'public-anon-key';
-  // const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  let notes = [];
 
   const notesGrid = document.getElementById('notesGrid');
   const noteForm = document.getElementById('noteForm');
@@ -18,61 +13,94 @@
   const titleInput = document.getElementById('noteTitle');
   const contentInput = document.getElementById('noteContent');
 
-  function renderNotes(){
-    notesGrid.innerHTML = '';
-    if(!notes.length){
-      notesGrid.innerHTML = '<p style="color:var(--muted)">No hay notas aún. Crea una nueva.</p>';
-      return;
-    }
+  async function renderNotes(){
+    notesGrid.innerHTML = '<p style="color:var(--muted)">Cargando...</p>';
+    try {
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      notes = data || [];
+      
+      if(!notes.length){
+        notesGrid.innerHTML = '<p style="color:var(--muted)">No hay notas aún. Crea una nueva.</p>';
+        return;
+      }
 
-    notes.forEach(n => {
-      const card = document.createElement('article');
-      card.className = 'note-card';
-      card.dataset.id = n.id;
-      card.innerHTML = `
-        <h3>${escapeHtml(n.title)}</h3>
-        <p>${escapeHtml(n.content)}</p>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
-          <span class="tag">${escapeHtml(n.tag || '')}</span>
-          <div class="note-actions">
-            <button class="action edit" data-id="${n.id}" aria-label="Editar">Editar</button>
-            <button class="action delete" data-id="${n.id}" aria-label="Borrar">Borrar</button>
+      notesGrid.innerHTML = '';
+      notes.forEach(n => {
+        const card = document.createElement('article');
+        card.className = 'note-card';
+        card.dataset.id = n.id;
+        card.innerHTML = `
+          <h3>${escapeHtml(n.title)}</h3>
+          <p>${escapeHtml(n.content)}</p>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+            <span class="tag">${escapeHtml(n.category || 'General')}</span>
+            <div class="note-actions">
+              <button class="action edit" data-id="${n.id}" aria-label="Editar">Editar</button>
+              <button class="action delete" data-id="${n.id}" aria-label="Borrar">Borrar</button>
+            </div>
           </div>
-        </div>
-      `;
-      notesGrid.appendChild(card);
-    });
+        `;
+        notesGrid.appendChild(card);
+      });
+    } catch(err) {
+      notesGrid.innerHTML = `<p style="color:#ef4444">Error cargando notas: ${err.message}</p>`;
+    }
   }
 
   function escapeHtml(str){
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // Crear nota nueva en memoria
-  function createNote(data){
-    const id = Date.now().toString();
-    const note = Object.assign({ id, tag: 'Hoy' }, data);
-    notes.unshift(note);
-    renderNotes();
-    // TODO: enviar a Supabase
+  // Crear nota nueva en Supabase
+  async function createNote(data){
+    try {
+      const { error } = await supabase
+        .from('notes')
+        .insert([data]);
+      if(error) throw error;
+      await renderNotes();
+    } catch(err) {
+      console.error('Error creando nota:', err);
+      alert('Error al guardar la nota');
+    }
   }
 
-  function updateNote(id, data){
-    const idx = notes.findIndex(x=>x.id===id);
-    if(idx === -1) return;
-    notes[idx] = Object.assign({}, notes[idx], data);
-    renderNotes();
-    // TODO: actualizar en Supabase
+  async function updateNote(id, data){
+    try {
+      const { error } = await supabase
+        .from('notes')
+        .update(data)
+        .eq('id', id);
+      if(error) throw error;
+      await renderNotes();
+    } catch(err) {
+      console.error('Error actualizando nota:', err);
+      alert('Error al actualizar la nota');
+    }
   }
 
-  function deleteNote(id){
-    notes = notes.filter(x=>x.id!==id);
-    renderNotes();
-    // TODO: borrar en Supabase
+  async function deleteNote(id){
+    try {
+      const { error } = await supabase
+        .from('notes')
+        .delete()
+        .eq('id', id);
+      if(error) throw error;
+      await renderNotes();
+    } catch(err) {
+      console.error('Error borrando nota:', err);
+      alert('Error al borrar la nota');
+    }
   }
 
   // Manejo del submit del formulario
-  noteForm.addEventListener('submit', (e)=>{
+  noteForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const id = noteIdInput.value;
     const payload = { title: titleInput.value.trim(), content: contentInput.value.trim(), category: getSelectedCategory() };
@@ -82,9 +110,9 @@
     }
 
     if(id){
-      updateNote(id, payload);
+      await updateNote(id, payload);
     } else {
-      createNote(payload);
+      await createNote(payload);
     }
 
     clearForm();
@@ -105,7 +133,7 @@
   }
 
   // Delegación de eventos para editar / borrar
-  notesGrid.addEventListener('click', (e)=>{
+  notesGrid.addEventListener('click', async (e)=>{
     const editBtn = e.target.closest('.action.edit');
     const delBtn = e.target.closest('.action.delete');
     if(editBtn){
@@ -115,7 +143,7 @@
     }
     if(delBtn){
       const id = delBtn.dataset.id;
-      if(confirm('¿Borrar esta nota?')) deleteNote(id);
+      if(confirm('¿Borrar esta nota?')) await deleteNote(id);
     }
   });
 
@@ -132,5 +160,3 @@
 
   // Inicializar
   renderNotes();
-
-})();
