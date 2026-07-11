@@ -69,7 +69,8 @@
   // Crear nota nueva en Supabase
   async function createNote(data){
     try {
-      const newNote = { id: generateUUID(), ...data };
+      const now = new Date().toISOString();
+      const newNote = { id: generateUUID(), ...data, created_at: now, modified_at: now };
       const { error } = await supabase
         .from('notes')
         .insert([newNote]);
@@ -83,9 +84,11 @@
 
   async function updateNote(id, data){
     try {
+      const now = new Date().toISOString();
+      const updateData = { ...data, modified_at: now };
       const { error } = await supabase
         .from('notes')
-        .update(data)
+        .update(updateData)
         .eq('id', id);
       if(error) throw error;
       await renderNotes();
