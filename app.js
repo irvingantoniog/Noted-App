@@ -160,3 +160,5 @@
 
   // Inicializar
   renderNotes();
+
+})();
